@@ -1,0 +1,39 @@
+name: Scheduled load tests
+
+on:
+  schedule:
+    - cron: "17 3 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Load-test profile
+        type: choice
+        options:
+          - smoke
+          - baseline
+        default: baseline
+
+permissions:
+  contents: read
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run isolated load test
+        env:
+          LOAD_PROFILE: ${{ inputs.profile || 'baseline' }}
+        run: node scripts/run-load.mjs "$LOAD_PROFILE"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: load-test-summary
+          path: load-summary.json
+          if-no-files-found: ignore
+          retention-days: 14

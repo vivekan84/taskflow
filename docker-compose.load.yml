@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: task_tracker
+      POSTGRES_PASSWORD: load_test_only
+      POSTGRES_DB: task_tracker_load
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U task_tracker -d task_tracker_load"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://task_tracker:load_test_only@db:5432/task_tracker_load?schema=public
+      JWT_SECRET: load-test-only-secret
+      CLIENT_ORIGIN: http://localhost:5173
+      API_PORT: 3001
+      LOGIN_RATE_LIMIT: 10
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  loadtest:
+    image: grafana/k6:0.54.0
+    environment:
+      BASE_URL: http://api:3001
+      LOAD_PROFILE: ${LOAD_PROFILE:-smoke}
+    volumes:
+      - ./load:/scripts:ro
+    command: ["run", "--summary-export=/tmp/summary.json", "/scripts/taskflow.js"]
+    depends_on:
+      api:
+        condition: service_healthy
