@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { credentialsSchema, taskInputSchema, type TaskInput } from "@task-tracker/shared";
 import { api, type ApiError, type Task, type TaskDraft, type User } from "./api";
+import  TaskDetailsPage from "./pages/TaskDetailsPage";
 import "./style.css";
 
 export const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ export function App() {
           <Route path="/" element={<TaskListPage />} />
           <Route path="/tasks/new" element={<TaskFormPage />} />
           <Route path="/tasks/:id/edit" element={<TaskFormPage />} />
+          <Route path="/tasks/:id" element={<TaskDetailsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -122,7 +124,7 @@ function TaskRow({ task, onToggle, onDelete }: { task: Task; onToggle: () => voi
     <td><span className={`priority priority-${task.priority}`}><i />{task.priority}</span></td>
     <td><span className={`status status-${task.status}`}>{task.status.replace("_", " ")}</span></td>
     <td className="due-date">{task.dueDate ? new Date(task.dueDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "—"}</td>
-    <td className="row-actions"><Link className="icon-button" aria-label={`Edit ${task.title}`} title="Edit task" to={`/tasks/${task.id}/edit`}>↗</Link><button className="icon-button delete-action" aria-label={`Delete ${task.title}`} title="Delete task" onClick={onDelete}>×</button></td>
+    <td className="row-actions"><Link className="icon-button" aria-label={`View ${task.title}`} title="View task" to={`/tasks/${task.id}`}>👁</Link><Link className="icon-button" aria-label={`Edit ${task.title}`} title="Edit task" to={`/tasks/${task.id}/edit`}>↗</Link><button className="icon-button delete-action" aria-label={`Delete ${task.title}`} title="Delete task" onClick={onDelete}>×</button></td>
   </tr>;
 }
 

@@ -128,3 +128,16 @@ test("task list remains usable at phone width", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "My tasks" })).toBeVisible();
   await expect(page.getByText("Phone-width task", { exact: true })).toBeVisible();
 });
+
+test("opens task details from the list", async ({ page }) => {
+  await registerAndLogin(page);
+  await createTask(page, "Review task details", "on_hold", "critical");
+
+  await page.getByRole("link", { name: "View Review task details" }).click();
+
+  await expect(page).toHaveURL(/\/tasks\/\d+$/);
+  await expect(page.getByRole("heading", { name: "Review task details" })).toBeVisible();
+  await expect(page.getByText("Status: on_hold")).toBeVisible();
+  await expect(page.getByText("Priority: critical")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit Task" })).toBeVisible();
+});
